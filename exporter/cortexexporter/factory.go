@@ -2,10 +2,10 @@ package cortexexporter
 
 import (
 	"context"
-	"errors"
+	"encoding/json"
+	"fmt"
 
 	"go.opentelemetry.io/collector/component"
-	"go.opentelemetry.io/collector/config/confighttp"
 	"go.opentelemetry.io/collector/config/configmodels"
 	"go.opentelemetry.io/collector/exporter/exporterhelper"
 	prw "go.opentelemetry.io/collector/exporter/prometheusremotewriteexporter"
@@ -32,42 +32,48 @@ func NewFactory() component.ExporterFactory {
 func createMetricsExporter(_ context.Context, _ component.ExporterCreateParams,
 	cfg configmodels.Exporter) (component.MetricsExporter, error) {
 	// check if the configuration is valid
-	prwCfg, ok := cfg.(*Config)
-	if !ok {
-		return nil, errors.New("invalid configuration")
-	}
-	client, cerr := prwCfg.HTTPClientSettings.ToClient()
-	if cerr != nil {
-		return nil, cerr
-	}
+	// prwCfg, ok := cfg.(*Config)
+	// if !ok {
+	// 	return nil, errors.New("invalid configuration")
+	// }
+	// client, cerr := prwCfg.HTTPClientSettings.ToClient()
+	// if cerr != nil {
+	// 	return nil, cerr
+	// }
 
-	// load AWS auth configurations and create interceptor based on configuration
-	if prwCfg.AuthSettings.Enabled {
-		roundTripper, err := NewAuth(prwCfg.AuthSettings, client)
-		if err != nil {
-			return nil, err
-		}
-		client.Transport = roundTripper
-	}
+	// // load AWS auth configurations and create interceptor based on configuration
+	// if prwCfg.AuthSettings.Enabled {
+	// 	roundTripper, err := NewAuth(prwCfg.AuthSettings, client)
+	// 	if err != nil {
+	// 		return nil, err
+	// 	}
+	// 	client.Transport = roundTripper
+	// }
 
-	// initialize an upstream exporter and pass it an http.Client with interceptor
-	prwe, err := prw.NewPrwExporter(prwCfg.Namespace, prwCfg.HTTPClientSettings.Endpoint, client)
-	if err != nil {
-		return nil, err
-	}
+	// // initialize an upstream exporter and pass it an http.Client with interceptor
+	// prwe, err := prw.NewPrwExporter(prwCfg.Namespace, prwCfg.HTTPClientSettings.Endpoint, client)
+	// if err != nil {
+	// 	return nil, err
+	// }
 
-	// use upstream helper package to return an exporter that implements the required interface, and has timeout,
-	// queueing and retry feature enabled
-	prwexp, err := exporterhelper.NewMetricsExporter(
-		cfg,
-		prwe.PushMetrics,
-		exporterhelper.WithTimeout(prwCfg.TimeoutSettings),
-		exporterhelper.WithQueue(prwCfg.QueueSettings),
-		exporterhelper.WithRetry(prwCfg.RetrySettings),
-		exporterhelper.WithShutdown(prwe.Shutdown),
-	)
+	// // use upstream helper package to return an exporter that implements the required interface, and has timeout,
+	// // queueing and retry feature enabled
+	// prwexp, err := exporterhelper.NewMetricsExporter(
+	// 	cfg,
+	// 	prwe.PushMetrics,
+	// 	exporterhelper.WithTimeout(prwCfg.TimeoutSettings),
+	// 	exporterhelper.WithQueue(prwCfg.QueueSettings),
+	// 	exporterhelper.WithRetry(prwCfg.RetrySettings),
+	// 	exporterhelper.WithShutdown(prwe.Shutdown),
+	// )
 
-	return prwexp, err
+	// return prwexp, err
+	cfg.(*Config).PrwConfig.TypeVal = "prometheusremotewrite"
+	cfg.(*Config).PrwConfig.NameVal = "prometheusremotewrite"
+	prwExporter, error := prw.createMetricsExporter(_, _, cfg.(*Config).PrwConfig)
+	e, _ := json.Marshal(cfg)
+	fmt.Println(string(e))
+	return nil, nil
 }
 
 func createDefaultConfig() configmodels.Exporter {
@@ -83,17 +89,33 @@ func createDefaultConfig() configmodels.Exporter {
 			TypeVal: typeStr,
 			NameVal: typeStr,
 		},
-		Namespace:       "",
-		TimeoutSettings: exporterhelper.CreateDefaultTimeoutSettings(),
-		RetrySettings:   ts,
-		QueueSettings:   qs,
-		HTTPClientSettings: confighttp.HTTPClientSettings{
-			Endpoint: "http://some.url:9411/api/prom/push",
-			// We almost read 0 bytes, so no need to tune ReadBufferSize.
-			ReadBufferSize:  0,
-			WriteBufferSize: 512 * 1024,
-			Timeout:         exporterhelper.CreateDefaultTimeoutSettings().Timeout,
-			Headers:         map[string]string{},
+		// prwConfig: prwConfig{
+		// 	Namespace: "",
+		// 	Endpoint:  "",
+		// },
+		AuthSettings: AuthSettings{
+			Enabled: true,
+			Region:  "us-west-2",
+			Service: "aps",
+			Debug:   true,
 		},
+		// prwConfig: prw.Config{
+		// 	ExporterSettings: configmodels.ExporterSettings{
+		// 		TypeVal: "prometheusremotewrite",
+		// 		NameVal: "prometheusremotewrite",
+		// 	},
+		// 	Namespace:       "",
+		// 	TimeoutSettings: exporterhelper.CreateDefaultTimeoutSettings(),
+		// 	RetrySettings:   ts,
+		// 	QueueSettings:   qs,
+		// 	HTTPClientSettings: confighttp.HTTPClientSettings{
+		// 		Endpoint: "http://some.url:9411/api/prom/push",
+		// 		// We almost read 0 bytes, so no need to tune ReadBufferSize.
+		// 		ReadBufferSize:  0,
+		// 		WriteBufferSize: 512 * 1024,
+		// 		Timeout:         exporterhelper.CreateDefaultTimeoutSettings().Timeout,
+		// 		Headers:         map[string]string{},
+		// 	},
+		// },
 	}
 }
