@@ -73,8 +73,8 @@ func createMetricsProcessor(
 // An error is returned if there are any invalid inputs.
 func validateConfiguration(config *Config) error {
 	for _, transform := range config.Transforms {
-		if transform.MetricName == "" {
-			return fmt.Errorf("missing required field %q", MetricNameFieldName)
+		if transform.MetricName == "" && transform.NewName != "" {
+			return fmt.Errorf("cannot specify new name on batch metrics operations")
 		}
 
 		if transform.Action != Update && transform.Action != Insert {

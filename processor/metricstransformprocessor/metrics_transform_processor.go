@@ -66,23 +66,34 @@ func (mtp *metricsTransformProcessor) ProcessMetrics(_ context.Context, md pdata
 		}
 
 		for _, transform := range mtp.transforms {
-			metric, ok := nameToMetricMapping[transform.MetricName]
-			if !ok {
-				continue
-			}
+			if transform.MetricName == "" {
+				for _, metric := range data.Metrics {
+					if transform.Action == Insert {
+						metric = proto.Clone(metric).(*metricspb.Metric)
+						data.Metrics = append(data.Metrics, metric)
+					}
 
-			if transform.Action == Insert {
-				metric = proto.Clone(metric).(*metricspb.Metric)
-				data.Metrics = append(data.Metrics, metric)
-			}
-
-			mtp.update(metric, transform)
-
-			if transform.NewName != "" {
-				if transform.Action == Update {
-					delete(nameToMetricMapping, transform.MetricName)
+					mtp.update(metric, transform)
 				}
-				nameToMetricMapping[transform.NewName] = metric
+			} else {
+				metric, ok := nameToMetricMapping[transform.MetricName]
+				if !ok {
+					continue
+				}
+
+				if transform.Action == Insert {
+					metric = proto.Clone(metric).(*metricspb.Metric)
+					data.Metrics = append(data.Metrics, metric)
+				}
+
+				mtp.update(metric, transform)
+
+				if transform.NewName != "" {
+					if transform.Action == Update {
+						delete(nameToMetricMapping, transform.MetricName)
+					}
+					nameToMetricMapping[transform.NewName] = metric
+				}
 			}
 		}
 	}
