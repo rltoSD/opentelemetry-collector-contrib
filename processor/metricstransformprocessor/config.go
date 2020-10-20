@@ -14,7 +14,10 @@
 
 package metricstransformprocessor
 
-import "go.opentelemetry.io/collector/config/configmodels"
+import (
+	"github.com/open-telemetry/opentelemetry-collector-contrib/internal/filterset"
+	"go.opentelemetry.io/collector/config/configmodels"
+)
 
 const (
 	// MetricNameFieldName is the mapstructure field name for MetricName field
@@ -49,6 +52,8 @@ type Transform struct {
 	// MetricName is used to select the metric to operate on.
 	// REQUIRED
 	MetricName string `mapstructure:"metric_name"`
+
+	filterset.Config `mapstructure:",squash"`
 
 	// Action specifies the action performed on the matched metric.
 	// REQUIRED

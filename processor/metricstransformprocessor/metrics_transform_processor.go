@@ -17,6 +17,8 @@ package metricstransformprocessor
 import (
 	"context"
 
+	"github.com/open-telemetry/opentelemetry-collector-contrib/internal/filterset"
+
 	metricspb "github.com/census-instrumentation/opencensus-proto/gen-go/metrics/v1"
 	"go.opentelemetry.io/collector/consumer/pdata"
 	"go.opentelemetry.io/collector/processor/processorhelper"
@@ -28,6 +30,7 @@ import (
 
 type internalTransform struct {
 	MetricName string
+	FilterSet  filterset.FilterSet
 	Action     ConfigAction
 	NewName    string
 	Operations []internalOperation
@@ -66,24 +69,41 @@ func (mtp *metricsTransformProcessor) ProcessMetrics(_ context.Context, md pdata
 		}
 
 		for _, transform := range mtp.transforms {
-			metric, ok := nameToMetricMapping[transform.MetricName]
-			if !ok {
-				continue
-			}
+			for _, metric := range data.Metrics {
+				if transform.FilterSet.Matches(metric.MetricDescriptor.Name) {
+					if transform.Action == Insert {
+						metric = proto.Clone(metric).(*metricspb.Metric)
+						data.Metrics = append(data.Metrics, metric)
+					}
 
-			if transform.Action == Insert {
-				metric = proto.Clone(metric).(*metricspb.Metric)
-				data.Metrics = append(data.Metrics, metric)
-			}
+					mtp.update(metric, transform)
 
-			mtp.update(metric, transform)
-
-			if transform.NewName != "" {
-				if transform.Action == Update {
-					delete(nameToMetricMapping, transform.MetricName)
+					if transform.NewName != "" {
+						if transform.Action == Update {
+							delete(nameToMetricMapping, transform.MetricName)
+						}
+						nameToMetricMapping[transform.NewName] = metric
+					}
 				}
-				nameToMetricMapping[transform.NewName] = metric
 			}
+			// metric, ok := nameToMetricMapping[transform.MetricName]
+			// if !ok {
+			// 	continue
+			// }
+
+			// if transform.Action == Insert {
+			// 	metric = proto.Clone(metric).(*metricspb.Metric)
+			// 	data.Metrics = append(data.Metrics, metric)
+			// }
+
+			// mtp.update(metric, transform)
+
+			// if transform.NewName != "" {
+			// 	if transform.Action == Update {
+			// 		delete(nameToMetricMapping, transform.MetricName)
+			// 	}
+			// 	nameToMetricMapping[transform.NewName] = metric
+			// }
 		}
 	}
 

@@ -16,8 +16,11 @@ package metricstransformprocessor
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"strings"
+
+	"github.com/open-telemetry/opentelemetry-collector-contrib/internal/filterset"
 
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/config/configmodels"
@@ -72,6 +75,8 @@ func createMetricsProcessor(
 // validateConfiguration validates the input configuration has all of the required fields for the processor
 // An error is returned if there are any invalid inputs.
 func validateConfiguration(config *Config) error {
+	e, _ := json.Marshal(config)
+	fmt.Println(string(e))
 	for _, transform := range config.Transforms {
 		if transform.MetricName == "" {
 			return fmt.Errorf("missing required field %q", MetricNameFieldName)
@@ -104,8 +109,14 @@ func validateConfiguration(config *Config) error {
 func buildHelperConfig(config *Config, version string) []internalTransform {
 	helperDataTransforms := make([]internalTransform, len(config.Transforms))
 	for i, t := range config.Transforms {
+		filters := []string{t.MetricName}
+		filterSet, _ := filterset.CreateFilterSet(filters, &filterset.Config{
+			MatchType:    t.MatchType,
+			RegexpConfig: t.RegexpConfig,
+		})
 		helperT := internalTransform{
 			MetricName: t.MetricName,
+			FilterSet:  filterSet,
 			Action:     t.Action,
 			NewName:    t.NewName,
 			Operations: make([]internalOperation, len(t.Operations)),
