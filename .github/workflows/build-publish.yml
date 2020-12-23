@@ -35,6 +35,8 @@ jobs:
         run: go run cmd/issuegenerator/main.go $TEST_RESULTS
   setup:
     runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.splitcrosscompile.outputs.matrix }}
     steps:
       - name: Checkout Repo
         uses: actions/checkout@v2
@@ -68,6 +70,9 @@ jobs:
         run: make -j8 for-all-target TARGET=dep
       - name: Install testbed tools
         run: make -C testbed install-tools
+      - name: Setup cross-compile matrix
+        id: splitcrosscompile
+        run:  ./.github/workflows/scripts/setup_cross_compile.sh
       - name: Upload Binaries
         uses: actions/upload-artifact@v1
         with:
@@ -109,3 +114,66 @@ jobs:
         run: |
           make generate
           git diff --exit-code ':!*go.sum' || (echo 'Generated code is out of date, please run "make generate" and commit the changes in this PR.' && exit 1)
+  build-examples:
+    runs-on: ubuntu-latest
+    needs: [setup]
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v2
+      - name: Setup Go
+        uses: actions/setup-go@v2.1.3
+        with:
+          go-version: 1.15
+      - name: Setup Go Environment
+        run: |
+          echo "GOPATH=$(go env GOPATH)" >> $GITHUB_ENV
+          echo "$(go env GOPATH)/bin" >> $GITHUB_PATH
+      - name: Cache Go Modules
+        uses: actions/cache@v2
+        env:
+          cache-name: cache-go-modules
+        with:
+          path: /home/runner/go/pkg/mod
+          key: go-pkg-mod-${{ runner.os }}-${{ hashFiles('./go.mod') }}
+      - name: Download Binaries
+        uses: actions/download-artifact@v1
+        with:
+          name: binaries
+          path: /home/runner/go/bin
+      - name: Add Permissions to Binaries
+        run: chmod -R +x /home/runner/go/bin
+      - name: Build examples
+        run: make build-examples
+  cross-compile:
+    runs-on: ubuntu-latest
+    needs: [setup]
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJson(needs.loadtestpre.outputs.matrix) }}
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v2
+      - name: Setup Go
+        uses: actions/setup-go@v2.1.3
+        with:
+          go-version: 1.15
+      - name: Setup Go Environment
+        run: |
+          echo "GOPATH=$(go env GOPATH)" >> $GITHUB_ENV
+          echo "$(go env GOPATH)/bin" >> $GITHUB_PATH
+      - name: Cache Go Modules
+        uses: actions/cache@v2
+        env:
+          cache-name: cache-go-modules
+        with:
+          path: /home/runner/go/pkg/mod
+          key: go-pkg-mod-${{ runner.os }}-${{ hashFiles('./go.mod') }}
+      - name: Download Binaries
+        uses: actions/download-artifact@v1
+        with:
+          name: binaries
+          path: /home/runner/go/bin
+      - name: Add Permissions to Binaries
+        run: chmod -R +x /home/runner/go/bin
+      - name: Build collector for all archs
+        run: make ${{ matrix.arch }}
