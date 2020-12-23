@@ -5,6 +5,8 @@ on:
     tags:
       - 'v[0-9]+.[0-9]+.[0-9]+*'
   pull_request:
+env:
+  TEST_RESULTS: testbed/tests/results/junit/results.xml
 
 jobs:
   windows-test:
@@ -177,3 +179,48 @@ jobs:
         run: chmod -R +x /home/runner/go/bin
       - name: Build collector for all archs
         run: make ${{ matrix.arch }}
+  loadtest:
+    runs-on: ubuntu-latest
+    needs: [cross-compile]
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v2
+      - name: Setup Go
+        uses: actions/setup-go@v2.1.3
+        with:
+          go-version: 1.15
+      - name: Setup Go Environment
+        run: |
+          echo "GOPATH=$(go env GOPATH)" >> $GITHUB_ENV
+          echo "$(go env GOPATH)/bin" >> $GITHUB_PATH
+      - name: Cache Go Modules
+        uses: actions/cache@v2
+        env:
+          cache-name: cache-go-modules
+        with:
+          path: /home/runner/go/pkg/mod
+          key: go-pkg-mod-${{ runner.os }}-${{ hashFiles('./go.mod') }}
+      - name: Download Binaries
+        uses: actions/download-artifact@v1
+        with:
+          name: binaries
+          path: /home/runner/go/bin
+      - name: Add Permissions to Binaries
+        run: chmod -R +x /home/runner/go/bin
+      - name: loadtest
+        run: make e2e-test
+      - name: Create Test Result Archive # some test results have invalid characters
+        if: ${{ failure() || success() }}
+        continue-on-error: true
+        run: tar -cvf test_results.tar testbed/tests/results
+      - name: Upload Test Results
+        if: ${{ failure() || success() }}
+        continue-on-error: true
+        uses: actions/upload-artifact@v1
+        with:
+          name: test-results
+          path: test_results.tar
+      - name: GitHub Issue Generator
+        if: ${{ failure() && github.ref == 'ref/head/master' }}
+        run: |
+          go run cmd/issuegenerator/main.go $TEST_RESULTS
