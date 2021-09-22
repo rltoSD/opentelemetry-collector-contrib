@@ -23,7 +23,7 @@ import (
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/config"
 	"go.opentelemetry.io/collector/consumer"
-	"go.opentelemetry.io/collector/extension/storage"
+	"go.opentelemetry.io/collector/extension/experimental/storageextension"
 	"go.uber.org/multierr"
 	"go.uber.org/zap"
 )
@@ -36,7 +36,7 @@ type receiver struct {
 	agent         *agent.LogAgent
 	emitter       *LogEmitter
 	consumer      consumer.Logs
-	storageClient storage.Client
+	storageClient storageextension.Client
 	converter     *Converter
 	logger        *zap.Logger
 }

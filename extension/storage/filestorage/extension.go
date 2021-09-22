@@ -23,7 +23,7 @@ import (
 
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/config"
-	"go.opentelemetry.io/collector/extension/storage"
+	"go.opentelemetry.io/collector/extension/experimental/storageextension"
 	"go.uber.org/zap"
 )
 
@@ -34,7 +34,7 @@ type localFileStorage struct {
 }
 
 // Ensure this storage extension implements the appropriate interface
-var _ storage.Extension = (*localFileStorage)(nil)
+var _ storageextension.Extension = (*localFileStorage)(nil)
 
 func newLocalFileStorage(logger *zap.Logger, config *Config) (component.Extension, error) {
 	info, err := os.Stat(config.Directory)
@@ -61,8 +61,8 @@ func (lfs *localFileStorage) Shutdown(context.Context) error {
 	return nil
 }
 
-// GetClient returns a storage client for an individual component
-func (lfs *localFileStorage) GetClient(ctx context.Context, kind component.Kind, ent config.ComponentID, name string) (storage.Client, error) {
+// GetClient returns a storageextension client for an individual component
+func (lfs *localFileStorage) GetClient(ctx context.Context, kind component.Kind, ent config.ComponentID, name string) (storageextension.Client, error) {
 	var rawName string
 	if name == "" {
 		rawName = fmt.Sprintf("%s_%s_%s", kindString(kind), ent.Type(), ent.Name())

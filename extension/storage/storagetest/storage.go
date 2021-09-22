@@ -21,7 +21,7 @@ import (
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/component/componenttest"
 	"go.opentelemetry.io/collector/config"
-	"go.opentelemetry.io/collector/extension/storage"
+	"go.opentelemetry.io/collector/extension/experimental/storageextension"
 	"go.uber.org/zap/zaptest"
 
 	"github.com/open-telemetry/opentelemetry-collector-contrib/extension/storage/filestorage"
@@ -48,13 +48,13 @@ func NewStorageHost(t *testing.T, directory string, extensionNames ...string) St
 	return h
 }
 
-func NewTestExtension(t *testing.T, directory string) storage.Extension {
+func NewTestExtension(t *testing.T, directory string) storageextension.Extension {
 	f := filestorage.NewFactory()
 	cfg := f.CreateDefaultConfig().(*filestorage.Config)
 	cfg.Directory = directory
 	params := component.ExtensionCreateSettings{TelemetrySettings: component.TelemetrySettings{Logger: zaptest.NewLogger(t)}}
 	extension, _ := f.CreateExtension(context.Background(), params, cfg)
-	se, _ := extension.(storage.Extension)
+	se, _ := extension.(storageextension.Extension)
 	return se
 }
 

@@ -25,7 +25,7 @@ import (
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/component/componenttest"
 	"go.opentelemetry.io/collector/config"
-	"go.opentelemetry.io/collector/extension/storage"
+	"go.opentelemetry.io/collector/extension/experimental/storageextension"
 )
 
 func TestExtensionIntegrity(t *testing.T) {
@@ -49,14 +49,14 @@ func TestExtensionIntegrity(t *testing.T) {
 	}
 
 	// Make a client for each component
-	clients := make(map[config.ComponentID]storage.Client)
+	clients := make(map[config.ComponentID]storageextension.Client)
 	for _, c := range components {
 		client, err := se.GetClient(ctx, c.kind, c.name, "")
 		require.NoError(t, err)
 		clients[c.name] = client
 	}
 
-	thrashClient := func(wg *sync.WaitGroup, n config.ComponentID, c storage.Client) {
+	thrashClient := func(wg *sync.WaitGroup, n config.ComponentID, c storageextension.Client) {
 		// keys and values
 		keys := []string{"a", "b", "c", "d", "e"}
 		myBytes := []byte(n.Name())
@@ -206,7 +206,7 @@ func TestGetClientErrorsOnDeletedDirectory(t *testing.T) {
 	extension, err := f.CreateExtension(context.Background(), componenttest.NewNopExtensionCreateSettings(), cfg)
 	require.NoError(t, err)
 
-	se, ok := extension.(storage.Extension)
+	se, ok := extension.(storageextension.Extension)
 	require.True(t, ok)
 
 	// Delete the directory before getting client
@@ -224,7 +224,7 @@ func TestGetClientErrorsOnDeletedDirectory(t *testing.T) {
 	require.Nil(t, client)
 }
 
-func newTestExtension(t *testing.T) storage.Extension {
+func newTestExtension(t *testing.T) storageextension.Extension {
 	tempDir, err := ioutil.TempDir("", "")
 	require.NoError(t, err)
 
@@ -235,7 +235,7 @@ func newTestExtension(t *testing.T) storage.Extension {
 	extension, err := f.CreateExtension(context.Background(), componenttest.NewNopExtensionCreateSettings(), cfg)
 	require.NoError(t, err)
 
-	se, ok := extension.(storage.Extension)
+	se, ok := extension.(storageextension.Extension)
 	require.True(t, ok)
 
 	return se
