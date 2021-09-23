@@ -15,15 +15,17 @@ using the gRPC protocol. The valid syntax is described
 
 By default, TLS is enabled:
 
-- `insecure` (default = `false`): whether to enable client transport security for
-  the exporter's connection.
+- `tls:`
+  - `insecure` (default = `false`): whether to enable client transport security for
+    the exporter's connection.
 
 As a result, the following parameters are also required:
 
-- `cert_file` (no default): path to the TLS cert to use for TLS required connections. Should
-  only be used if `insecure` is set to false.
-- `key_file` (no default): path to the TLS key to use for TLS required connections. Should
-  only be used if `insecure` is set to false.
+- `tls:`
+  - `cert_file` (no default): path to the TLS cert to use for TLS required connections. Should
+    only be used if `insecure` is set to false.
+  - `key_file` (no default): path to the TLS key to use for TLS required connections. Should
+    only be used if `insecure` is set to false.
 
 Example:
 
@@ -31,11 +33,13 @@ Example:
 exporters:
   jaeger:
     endpoint: jaeger-all-in-one:14250
-    cert_file: file.cert
-    key_file: file.key
+    tls:
+      cert_file: file.cert
+      key_file: file.key
   jaeger/2:
     endpoint: jaeger-all-in-one:14250
-    insecure: true
+    tls:
+      insecure: true
 ```
 
 ## Advanced Configuration
