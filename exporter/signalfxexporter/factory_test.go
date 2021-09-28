@@ -28,7 +28,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/collector/component/componenttest"
 	"go.opentelemetry.io/collector/config"
-	"go.opentelemetry.io/collector/config/configcheck"
+	"go.opentelemetry.io/collector/config/configtest"
 	"go.opentelemetry.io/collector/exporter/exporterhelper"
 	"go.opentelemetry.io/collector/model/pdata"
 	"go.uber.org/zap"
@@ -40,7 +40,7 @@ import (
 func TestCreateDefaultConfig(t *testing.T) {
 	cfg := createDefaultConfig()
 	assert.NotNil(t, cfg, "failed to create default config")
-	assert.NoError(t, configcheck.ValidateConfig(cfg))
+	assert.NoError(t, configtest.CheckConfigStruct(cfg))
 }
 
 func TestCreateMetricsExporter(t *testing.T) {
@@ -333,7 +333,7 @@ func testMetricsData() pdata.ResourceMetrics {
 	m2.SetDescription("Disk I/O.")
 	m2.SetDataType(pdata.MetricDataTypeSum)
 	m2.Sum().SetIsMonotonic(true)
-	m2.Sum().SetAggregationTemporality(pdata.AggregationTemporalityCumulative)
+	m2.Sum().SetAggregationTemporality(pdata.MetricAggregationTemporalityCumulative)
 	dp21 := m2.Sum().DataPoints().AppendEmpty()
 	dp21.Attributes().InitFromMap(map[string]pdata.AttributeValue{
 		"host":      pdata.NewAttributeValueString("host0"),
@@ -373,7 +373,7 @@ func testMetricsData() pdata.ResourceMetrics {
 	m3.SetUnit("bytes")
 	m3.SetDataType(pdata.MetricDataTypeSum)
 	m3.Sum().SetIsMonotonic(true)
-	m3.Sum().SetAggregationTemporality(pdata.AggregationTemporalityCumulative)
+	m3.Sum().SetAggregationTemporality(pdata.MetricAggregationTemporalityCumulative)
 	dp31 := m3.Sum().DataPoints().AppendEmpty()
 	dp31.Attributes().InitFromMap(map[string]pdata.AttributeValue{
 		"host":      pdata.NewAttributeValueString("host0"),
@@ -413,7 +413,7 @@ func testMetricsData() pdata.ResourceMetrics {
 	m4.SetUnit("bytes")
 	m4.SetDataType(pdata.MetricDataTypeSum)
 	m4.Sum().SetIsMonotonic(true)
-	m4.Sum().SetAggregationTemporality(pdata.AggregationTemporalityCumulative)
+	m4.Sum().SetAggregationTemporality(pdata.MetricAggregationTemporalityCumulative)
 	dp41 := m4.Sum().DataPoints().AppendEmpty()
 	dp41.Attributes().InitFromMap(map[string]pdata.AttributeValue{
 		"device":    pdata.NewAttributeValueString("sda1"),
