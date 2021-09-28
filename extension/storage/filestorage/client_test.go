@@ -25,7 +25,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 	"go.etcd.io/bbolt"
-	"go.opentelemetry.io/collector/extension/experimental/storageextension"
+	"go.opentelemetry.io/collector/extension/experimental/storage"
 )
 
 func TestClientOperations(t *testing.T) {
@@ -71,14 +71,14 @@ func TestClientBatchOperations(t *testing.T) {
 	require.NoError(t, err)
 
 	ctx := context.Background()
-	testSetEntries := []storageextension.Operation{
-		storageextension.SetOperation("testKey1", []byte("testValue1")),
-		storageextension.SetOperation("testKey2", []byte("testValue2")),
+	testSetEntries := []storage.Operation{
+		storage.SetOperation("testKey1", []byte("testValue1")),
+		storage.SetOperation("testKey2", []byte("testValue2")),
 	}
 
-	testGetEntries := []storageextension.Operation{
-		storageextension.GetOperation("testKey1"),
-		storageextension.GetOperation("testKey2"),
+	testGetEntries := []storage.Operation{
+		storage.GetOperation("testKey1"),
+		storage.GetOperation("testKey2"),
 	}
 
 	// Make sure nothing is there
@@ -99,9 +99,9 @@ func TestClientBatchOperations(t *testing.T) {
 	}
 
 	// Update it (the first entry should be empty and the second one removed)
-	testEntriesUpdate := []storageextension.Operation{
-		storageextension.SetOperation("testKey1", []byte{}),
-		storageextension.DeleteOperation("testKey2"),
+	testEntriesUpdate := []storage.Operation{
+		storage.SetOperation("testKey1", []byte{}),
+		storage.DeleteOperation("testKey2"),
 	}
 	err = client.Batch(ctx, testEntriesUpdate...)
 	require.NoError(t, err)
@@ -115,9 +115,9 @@ func TestClientBatchOperations(t *testing.T) {
 	}
 
 	// Delete it all
-	testEntriesDelete := []storageextension.Operation{
-		storageextension.DeleteOperation("testKey1"),
-		storageextension.DeleteOperation("testKey2"),
+	testEntriesDelete := []storage.Operation{
+		storage.DeleteOperation("testKey1"),
+		storage.DeleteOperation("testKey2"),
 	}
 	err = client.Batch(ctx, testEntriesDelete...)
 	require.NoError(t, err)
@@ -236,9 +236,9 @@ func BenchmarkClientGet100(b *testing.B) {
 
 	ctx := context.Background()
 
-	testEntries := make([]storageextension.Operation, 100)
+	testEntries := make([]storage.Operation, 100)
 	for i := 0; i < 100; i++ {
-		testEntries[i] = storageextension.GetOperation(fmt.Sprintf("testKey-%d", i))
+		testEntries[i] = storage.GetOperation(fmt.Sprintf("testKey-%d", i))
 	}
 
 	b.ResetTimer()
@@ -273,9 +273,9 @@ func BenchmarkClientSet100(b *testing.B) {
 
 	ctx := context.Background()
 
-	testEntries := make([]storageextension.Operation, 100)
+	testEntries := make([]storage.Operation, 100)
 	for i := 0; i < 100; i++ {
-		testEntries[i] = storageextension.SetOperation(fmt.Sprintf("testKey-%d", i), []byte("testValue"))
+		testEntries[i] = storage.SetOperation(fmt.Sprintf("testKey-%d", i), []byte("testValue"))
 	}
 
 	b.ResetTimer()

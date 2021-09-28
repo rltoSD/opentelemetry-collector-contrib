@@ -20,13 +20,13 @@ import (
 
 	"github.com/open-telemetry/opentelemetry-log-collection/operator"
 	"go.opentelemetry.io/collector/component"
-	"go.opentelemetry.io/collector/extension/experimental/storageextension"
+	"go.opentelemetry.io/collector/extension/experimental/storage"
 )
 
 func (r *receiver) setStorageClient(ctx context.Context, host component.Host) error {
-	var storageExtension storageextension.Extension
+	var storageExtension storage.Extension
 	for _, ext := range host.GetExtensions() {
-		if se, ok := ext.(storageextension.Extension); ok {
+		if se, ok := ext.(storage.Extension); ok {
 			if storageExtension != nil {
 				return errors.New("multiple storage extensions found")
 			}
@@ -35,11 +35,11 @@ func (r *receiver) setStorageClient(ctx context.Context, host component.Host) er
 	}
 
 	if storageExtension == nil {
-		r.storageClient = storageextension.NewNopClient()
+		r.storageClient = storage.NewNopClient()
 		return nil
 	}
 
-	client, err := storageExtension.GetClient(ctx, component.KindReceiver, r.id, "")
+	client, err := storage.GetClient(ctx, component.KindReceiver, r.id, "")
 	if err != nil {
 		return err
 	}
@@ -53,7 +53,7 @@ func (r *receiver) getPersister() operator.Persister {
 }
 
 type persister struct {
-	client storageextension.Client
+	client storage.Client
 }
 
 var _ operator.Persister = &persister{}

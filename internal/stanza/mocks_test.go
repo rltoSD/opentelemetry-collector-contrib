@@ -28,7 +28,7 @@ import (
 	"github.com/open-telemetry/opentelemetry-log-collection/operator/helper"
 	"go.opentelemetry.io/collector/config"
 	"go.opentelemetry.io/collector/consumer"
-	"go.opentelemetry.io/collector/extension/experimental/storageextension"
+	"go.opentelemetry.io/collector/extension/experimental/storage"
 	"go.opentelemetry.io/collector/model/pdata"
 )
 
@@ -194,17 +194,17 @@ func (p *mockClient) Delete(_ context.Context, key string) error {
 	return nil
 }
 
-func (p *mockClient) Batch(_ context.Context, ops ...storageextension.Operation) error {
+func (p *mockClient) Batch(_ context.Context, ops ...storage.Operation) error {
 	p.cacheMux.Lock()
 	defer p.cacheMux.Unlock()
 
 	for _, op := range ops {
 		switch op.Type {
-		case storageextension.Get:
+		case storage.Get:
 			op.Value = p.cache[op.Key]
-		case storageextension.Set:
+		case storage.Set:
 			p.cache[op.Key] = op.Value
-		case storageextension.Delete:
+		case storage.Delete:
 			delete(p.cache, op.Key)
 		default:
 			return errors.New("wrong operation type")

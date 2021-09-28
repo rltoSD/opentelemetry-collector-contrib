@@ -20,7 +20,7 @@ import (
 	"time"
 
 	"go.etcd.io/bbolt"
-	"go.opentelemetry.io/collector/extension/experimental/storageextension"
+	"go.opentelemetry.io/collector/extension/experimental/storage"
 )
 
 var defaultBucket = []byte(`default`)
@@ -50,9 +50,9 @@ func newClient(filePath string, timeout time.Duration) (*fileStorageClient, erro
 	return &fileStorageClient{db}, nil
 }
 
-// Get will retrieve data from storageextension that corresponds to the specified key
+// Get will retrieve data from storage that corresponds to the specified key
 func (c *fileStorageClient) Get(ctx context.Context, key string) ([]byte, error) {
-	op := storageextension.GetOperation(key)
+	op := storage.GetOperation(key)
 	err := c.Batch(ctx, op)
 	if err != nil {
 		return nil, err
@@ -63,16 +63,16 @@ func (c *fileStorageClient) Get(ctx context.Context, key string) ([]byte, error)
 
 // Set will store data. The data can be retrieved using the same key
 func (c *fileStorageClient) Set(ctx context.Context, key string, value []byte) error {
-	return c.Batch(ctx, storageextension.SetOperation(key, value))
+	return c.Batch(ctx, storage.SetOperation(key, value))
 }
 
 // Delete will delete data associated with the specified key
 func (c *fileStorageClient) Delete(ctx context.Context, key string) error {
-	return c.Batch(ctx, storageextension.DeleteOperation(key))
+	return c.Batch(ctx, storage.DeleteOperation(key))
 }
 
 // Batch executes the specified operations in order. Get operation results are updated in place
-func (c *fileStorageClient) Batch(_ context.Context, ops ...storageextension.Operation) error {
+func (c *fileStorageClient) Batch(_ context.Context, ops ...storage.Operation) error {
 	batch := func(tx *bbolt.Tx) error {
 		bucket := tx.Bucket(defaultBucket)
 		if bucket == nil {
@@ -82,11 +82,11 @@ func (c *fileStorageClient) Batch(_ context.Context, ops ...storageextension.Ope
 		var err error
 		for _, op := range ops {
 			switch op.Type {
-			case storageextension.Get:
+			case storage.Get:
 				op.Value = bucket.Get([]byte(op.Key))
-			case storageextension.Set:
+			case storage.Set:
 				err = bucket.Put([]byte(op.Key), op.Value)
-			case storageextension.Delete:
+			case storage.Delete:
 				err = bucket.Delete([]byte(op.Key))
 			default:
 				return errors.New("wrong operation type")
