@@ -40,7 +40,7 @@ func TestLoadConfig(t *testing.T) {
 
 	assert.Equal(t, len(cfg.Exporters), 2)
 
-	r0 := cfg.Exporters[config.NewID(typeStr)]
+	r0 := cfg.Exporters[config.NewComponentID(typeStr)]
 	defaultConfig := factory.CreateDefaultConfig().(*Config)
 
 	// The marshaller should set the endpoint specific configuration to the common config by default

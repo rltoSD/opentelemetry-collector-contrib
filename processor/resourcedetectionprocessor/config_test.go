@@ -40,7 +40,7 @@ func TestLoadConfig(t *testing.T) {
 	assert.NoError(t, err)
 	assert.NotNil(t, cfg)
 
-	p1 := cfg.Processors[config.NewID(typeStr)]
+	p1 := cfg.Processors[config.NewComponentID(typeStr)]
 	assert.Equal(t, p1, factory.CreateDefaultConfig())
 
 	p2 := cfg.Processors[config.NewIDWithName(typeStr, "gce")]

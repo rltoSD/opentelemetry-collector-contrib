@@ -41,7 +41,7 @@ func TestLoadConfig(t *testing.T) {
 
 	assert.Equal(t, len(cfg.Receivers), 4)
 
-	r1 := cfg.Receivers[config.NewID(typeStr)]
+	r1 := cfg.Receivers[config.NewComponentID(typeStr)]
 	assert.Equal(t, r1, factory.CreateDefaultConfig())
 
 	r2 := cfg.Receivers[config.NewIDWithName(typeStr, "all_settings")].(*Config)

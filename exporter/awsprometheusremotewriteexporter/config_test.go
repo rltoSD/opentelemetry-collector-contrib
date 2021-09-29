@@ -44,7 +44,7 @@ func TestLoadConfig(t *testing.T) {
 	require.NotNil(t, cfg)
 
 	// From the default configurations -- checks if a correct exporter is instantiated
-	e0 := cfg.Exporters[config.NewID(typeStr)]
+	e0 := cfg.Exporters[config.NewComponentID(typeStr)]
 	cfgDefault := factory.CreateDefaultConfig()
 	// testing function equality is not supported in Go hence these will be ignored for this test
 	cfgDefault.(*Config).HTTPClientSettings.CustomRoundTripper = nil

@@ -127,7 +127,7 @@ func (f TestReceiverType) Type() config.Type {
 func (f TestReceiverType) CreateDefaultConfig() config.Receiver {
 	return &TestConfig{
 		BaseConfig: BaseConfig{
-			ReceiverSettings: config.NewReceiverSettings(config.NewID(testType)),
+			ReceiverSettings: config.NewReceiverSettings(config.NewComponentID(testType)),
 			Operators:        OperatorConfigs{},
 			Converter: ConverterConfig{
 				MaxFlushCount: 1,

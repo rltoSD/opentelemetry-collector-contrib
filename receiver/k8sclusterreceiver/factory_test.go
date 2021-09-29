@@ -40,7 +40,7 @@ func TestFactory(t *testing.T) {
 	require.True(t, ok)
 
 	require.Equal(t, &Config{
-		ReceiverSettings:           config.NewReceiverSettings(config.NewID(typeStr)),
+		ReceiverSettings:           config.NewReceiverSettings(config.NewComponentID(typeStr)),
 		Distribution:               distributionKubernetes,
 		CollectionInterval:         10 * time.Second,
 		NodeConditionTypesToReport: defaultNodeConditionsToReport,

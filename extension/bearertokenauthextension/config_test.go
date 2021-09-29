@@ -39,7 +39,7 @@ func TestLoadConfig(t *testing.T) {
 	expected := factory.CreateDefaultConfig().(*Config)
 	expected.BearerToken = "sometoken"
 
-	ext0 := cfg.Extensions[config.NewID(typeStr)]
+	ext0 := cfg.Extensions[config.NewComponentID(typeStr)]
 	assert.Equal(t, expected, ext0)
 
 	ext1 := cfg.Extensions[config.NewIDWithName(typeStr, "1")]

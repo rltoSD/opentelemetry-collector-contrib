@@ -39,7 +39,7 @@ func TestLoadConfig(t *testing.T) {
 	require.Len(t, cfg.Extensions, 4)
 
 	// Default
-	ext0 := cfg.Extensions[config.NewID(typeStr)]
+	ext0 := cfg.Extensions[config.NewComponentID(typeStr)]
 	assert.Equal(t, factory.CreateDefaultConfig(), ext0)
 
 	// Merge w/ Default

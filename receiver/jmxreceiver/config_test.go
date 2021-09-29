@@ -40,7 +40,7 @@ func TestLoadConfig(t *testing.T) {
 
 	assert.Equal(t, len(cfg.Receivers), 6)
 
-	r0 := cfg.Receivers[config.NewID(typeStr)].(*Config)
+	r0 := cfg.Receivers[config.NewComponentID(typeStr)].(*Config)
 	require.NoError(t, configtest.CheckConfigStruct(r0))
 	assert.Equal(t, r0, factory.CreateDefaultConfig())
 	err = r0.validate()

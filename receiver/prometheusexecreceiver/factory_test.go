@@ -51,7 +51,7 @@ func TestCreateTraceAndMetricsReceiver(t *testing.T) {
 	assert.NoError(t, err)
 	assert.NotNil(t, cfg)
 
-	receiver := cfg.Receivers[config.NewID(typeStr)]
+	receiver := cfg.Receivers[config.NewComponentID(typeStr)]
 
 	// Test CreateTracesReceiver
 	traceReceiver, err = factory.CreateTracesReceiver(context.Background(), componenttest.NewNopReceiverCreateSettings(), receiver, nil)

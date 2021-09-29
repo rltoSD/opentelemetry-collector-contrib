@@ -42,7 +42,7 @@ func TestLoadConfig(t *testing.T) {
 
 	assert.Equal(t, 3, len(cfg.Exporters))
 
-	r0 := cfg.Exporters[config.NewID(typeStr)]
+	r0 := cfg.Exporters[config.NewComponentID(typeStr)]
 	assert.Equal(t, factory.CreateDefaultConfig(), r0)
 
 	r1 := cfg.Exporters[config.NewIDWithName(typeStr, "1")].(*Config)

@@ -38,7 +38,7 @@ func TestLoadConfig(t *testing.T) {
 	require.NotNil(t, cfg)
 	assert.Equal(t, 2, len(cfg.Receivers))
 
-	defaultConfig := cfg.Receivers[config.NewID(typeStr)]
+	defaultConfig := cfg.Receivers[config.NewComponentID(typeStr)]
 	assert.Equal(t, factory.CreateDefaultConfig(), defaultConfig)
 
 	dcfg := defaultConfig.(*Config)

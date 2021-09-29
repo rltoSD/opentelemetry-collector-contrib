@@ -40,10 +40,10 @@ func TestLoadConfig(t *testing.T) {
 	assert.Equal(t, len(cfg.Receivers), 2)
 
 	//ensure default configurations are generated when users provide nothing
-	r0 := cfg.Receivers[config.NewID(typeStr)]
+	r0 := cfg.Receivers[config.NewComponentID(typeStr)]
 	assert.Equal(t, factory.CreateDefaultConfig(), r0)
 
-	r1 := cfg.Receivers[config.NewID(typeStr)]
+	r1 := cfg.Receivers[config.NewComponentID(typeStr)]
 	assert.Equal(t, r1, factory.CreateDefaultConfig())
 
 	r2 := cfg.Receivers[config.NewIDWithName(typeStr, "collection_interval_settings")].(*Config)

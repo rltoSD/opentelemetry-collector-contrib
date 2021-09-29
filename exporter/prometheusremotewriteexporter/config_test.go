@@ -44,7 +44,7 @@ func Test_loadConfig(t *testing.T) {
 	require.NotNil(t, cfg)
 
 	// From the default configurations -- checks if a correct exporter is instantiated
-	e0 := cfg.Exporters[(config.NewID(typeStr))]
+	e0 := cfg.Exporters[(config.NewComponentID(typeStr))]
 	assert.Equal(t, e0, factory.CreateDefaultConfig())
 
 	// checks if the correct Config struct can be instantiated from testdata/config.yaml
