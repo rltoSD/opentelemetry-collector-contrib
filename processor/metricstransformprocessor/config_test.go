@@ -33,9 +33,9 @@ func TestLoadingFullConfig(t *testing.T) {
 	}{
 		{
 			configFile: "config_full.yaml",
-			filterName: config.NewID(typeStr),
+			filterName: config.NewComponentID(typeStr),
 			expCfg: &Config{
-				ProcessorSettings: config.NewProcessorSettings(config.NewID(typeStr)),
+				ProcessorSettings: config.NewProcessorSettings(config.NewComponentID(typeStr)),
 				Transforms: []Transform{
 					{
 						MetricIncludeFilter: FilterConfig{
@@ -156,9 +156,9 @@ func TestLoadingFullConfig(t *testing.T) {
 		},
 		{
 			configFile: "config_deprecated.yaml",
-			filterName: config.NewID(typeStr),
+			filterName: config.NewComponentID(typeStr),
 			expCfg: &Config{
-				ProcessorSettings: config.NewProcessorSettings(config.NewID(typeStr)),
+				ProcessorSettings: config.NewProcessorSettings(config.NewComponentID(typeStr)),
 				Transforms: []Transform{
 					{
 						MetricName: "old_name",

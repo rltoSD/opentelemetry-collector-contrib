@@ -53,7 +53,7 @@ func loadConfigAssertNoError(t *testing.T, receiverConfigID config.ComponentID) 
 
 // TestExecKeyMissing loads config and asserts there is an error with that config
 func TestExecKeyMissing(t *testing.T) {
-	receiverConfig := loadConfigAssertNoError(t, config.NewID(typeStr))
+	receiverConfig := loadConfigAssertNoError(t, config.NewComponentID(typeStr))
 
 	assertErrorWhenExecKeyMissing(t, receiverConfig)
 }
@@ -141,7 +141,7 @@ func TestConfigBuilderFunctions(t *testing.T) {
 		{
 			name: "no command",
 			cfg: &Config{
-				ReceiverSettings: config.NewReceiverSettings(config.NewID(typeStr)),
+				ReceiverSettings: config.NewReceiverSettings(config.NewComponentID(typeStr)),
 				ScrapeInterval:   60 * time.Second,
 				Port:             9104,
 				SubprocessConfig: subprocessmanager.SubprocessConfig{
@@ -150,7 +150,7 @@ func TestConfigBuilderFunctions(t *testing.T) {
 				},
 			},
 			wantReceiverConfig: &prometheusreceiver.Config{
-				ReceiverSettings: config.NewReceiverSettings(config.NewID(typeStr)),
+				ReceiverSettings: config.NewReceiverSettings(config.NewComponentID(typeStr)),
 				PrometheusConfig: &promconfig.Config{
 					ScrapeConfigs: []*promconfig.ScrapeConfig{
 						{

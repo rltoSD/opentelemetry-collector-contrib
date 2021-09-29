@@ -181,7 +181,7 @@ func TestGetReceiverOptions(t *testing.T) {
 				},
 			},
 			want: &receiverOptions{
-				id: config.NewID(typeStr),
+				id: config.NewComponentID(typeStr),
 				extraMetadataLabels: []kubelet.MetadataLabel{
 					kubelet.MetadataLabelContainerID,
 				},
@@ -224,7 +224,7 @@ func TestGetReceiverOptions(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			cfg := &Config{
-				ReceiverSettings:      config.NewReceiverSettings(config.NewID(typeStr)),
+				ReceiverSettings:      config.NewReceiverSettings(config.NewComponentID(typeStr)),
 				CollectionInterval:    10 * time.Second,
 				ExtraMetadataLabels:   tt.fields.extraMetadataLabels,
 				MetricGroupsToCollect: tt.fields.metricGroupsToCollect,

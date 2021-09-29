@@ -82,7 +82,7 @@ func Test_carbonreceiver_New(t *testing.T) {
 			name: "empty_endpoint",
 			args: args{
 				config: Config{
-					ReceiverSettings: config.NewReceiverSettings(config.NewID(typeStr)),
+					ReceiverSettings: config.NewReceiverSettings(config.NewComponentID(typeStr)),
 				},
 				nextConsumer: consumertest.NewNop(),
 			},
@@ -110,7 +110,7 @@ func Test_carbonreceiver_New(t *testing.T) {
 			name: "regex_parser",
 			args: args{
 				config: Config{
-					ReceiverSettings: config.NewReceiverSettings(config.NewID(typeStr)),
+					ReceiverSettings: config.NewReceiverSettings(config.NewComponentID(typeStr)),
 					NetAddr: confignet.NetAddr{
 						Endpoint:  "localhost:2003",
 						Transport: "tcp",
@@ -133,7 +133,7 @@ func Test_carbonreceiver_New(t *testing.T) {
 			name: "negative_tcp_idle_timeout",
 			args: args{
 				config: Config{
-					ReceiverSettings: config.NewReceiverSettings(config.NewID(typeStr)),
+					ReceiverSettings: config.NewReceiverSettings(config.NewComponentID(typeStr)),
 					NetAddr: confignet.NetAddr{
 						Endpoint:  "localhost:2003",
 						Transport: "tcp",

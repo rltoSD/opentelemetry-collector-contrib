@@ -39,7 +39,7 @@ func TestLoadConfig(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, cfg)
 
-	configDefault := cfg.Exporters[config.NewID(typeStr)]
+	configDefault := cfg.Exporters[config.NewComponentID(typeStr)]
 	assert.Equal(t, configDefault, factory.CreateDefaultConfig())
 
 	configWithSettings := cfg.Exporters[config.NewIDWithName(typeStr, "withsettings")].(*Config)

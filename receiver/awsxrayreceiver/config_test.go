@@ -45,7 +45,7 @@ func TestLoadConfig(t *testing.T) {
 
 	// ensure default configurations are generated when users provide
 	// nothing.
-	r0 := cfg.Receivers[config.NewID(awsxray.TypeStr)]
+	r0 := cfg.Receivers[config.NewComponentID(awsxray.TypeStr)]
 	assert.Equal(t, factory.CreateDefaultConfig(), r0)
 
 	// ensure the UDP endpoint can be properly overwritten

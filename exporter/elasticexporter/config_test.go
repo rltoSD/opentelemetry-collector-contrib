@@ -44,7 +44,7 @@ func TestLoadConfig(t *testing.T) {
 
 	defaultCfg := factory.CreateDefaultConfig()
 	defaultCfg.(*Config).APMServerURL = "https://elastic.example.com"
-	r0 := cfg.Exporters[config.NewID(typeStr)]
+	r0 := cfg.Exporters[config.NewComponentID(typeStr)]
 	assert.Equal(t, r0, defaultCfg)
 
 	r1 := cfg.Exporters[config.NewIDWithName(typeStr, "customname")]

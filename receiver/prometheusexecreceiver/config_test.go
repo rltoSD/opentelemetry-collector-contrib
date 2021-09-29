@@ -89,7 +89,7 @@ func TestLoadConfig(t *testing.T) {
 
 	assert.Equal(t, len(cfg.Receivers), 5)
 
-	receiver1 := cfg.Receivers[config.NewID(typeStr)]
+	receiver1 := cfg.Receivers[config.NewComponentID(typeStr)]
 	assert.Equal(t, factory.CreateDefaultConfig(), receiver1)
 
 	receiver2 := cfg.Receivers[config.NewIDWithName(typeStr, "test")]

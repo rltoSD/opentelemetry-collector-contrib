@@ -43,7 +43,7 @@ func TestLoadConfig(t *testing.T) {
 	assert.Equal(t, len(cfg.Exporters), 2)
 
 	defaultConfig := factory.CreateDefaultConfig().(*Config)
-	assert.Equal(t, cfg.Exporters[config.NewID(typeStr)], defaultConfig)
+	assert.Equal(t, cfg.Exporters[config.NewComponentID(typeStr)], defaultConfig)
 
 	customConfig := factory.CreateDefaultConfig().(*Config)
 	customConfig.SetIDName("customname")
