@@ -296,9 +296,9 @@ jobs:
             /home/runner/.cache/go-build
           key: v1-go-pkg-mod-${{ runner.os }}-${{ hashFiles('**/go.mod', '**/go.sum') }}
       - name: Run Stability Tests
-        run: |
-          echo "Running ${matrix.test}..."
-          TEST_ARGS="-test.run=${matrix.test}" make stability-tests
+        run: make stability-tests
+        env:
+          TEST_ARGS: "-test.run=${{ matrix.test }}"
       - name: Upload Unit Test Results
         if: always()
         uses: actions/upload-artifact@v2
