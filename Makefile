@@ -50,9 +50,8 @@ integration-tests-with-cover:
 # Long-running e2e tests
 .PHONY: stability-tests
 stability-tests: otelcontribcol
-	@echo Stability tests are disabled until we have a stable performance environment.
-	@echo To enable the tests replace this echo by $(MAKE) -C testbed run-stability-tests
-
+	$(MAKE) -C testbed run-stability-tests
+	
 .PHONY: gotidy
 gotidy:
 	$(MAKE) for-all CMD="rm -fr go.sum"
