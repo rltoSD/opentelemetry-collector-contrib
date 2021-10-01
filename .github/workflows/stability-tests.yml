@@ -86,9 +86,14 @@ jobs:
         run: make stability-tests
         env:
           TEST_ARGS: "-test.run=${{ matrix.test }}"
-      - name: Upload Unit Test Results
-        if: always()
+      - name: Create Test Result Archive
+        if: ${{ failure() || success() }}
+        continue-on-error: true
+        run: tar -cvf stabilitytest_results.tar testbed/stabilitytests/results
+      - name: Upload Test Results
+        if: ${{ failure() || success() }}
+        continue-on-error: true
         uses: actions/upload-artifact@v2
         with:
-          name: unittests-results
-          path: test-results/junit/results.xml
+          name: stability-test-results
+          path: stabilitytest_results.tar
