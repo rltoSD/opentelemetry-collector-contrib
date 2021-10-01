@@ -50,7 +50,7 @@ jobs:
         id: splitstabilitytest
         run: ./.github/workflows/scripts/setup_stability_tests.sh
 
-   stability-tests:
+  stability-tests:
     # Stability tests disabled in the makefile. We disable them here to avoid
     # consuming workers just to run a noop make target.
     # uncomment the following line to enable stability tests.
