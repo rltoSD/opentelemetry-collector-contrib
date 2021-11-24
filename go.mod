@@ -147,7 +147,7 @@ require (
 	github.com/apache/thrift v0.15.0 // indirect
 	github.com/armon/go-metrics v0.3.9 // indirect
 	github.com/avast/retry-go v3.0.0+incompatible // indirect
-	github.com/aws/aws-sdk-go v1.42.9 // indirect
+	github.com/aws/aws-sdk-go v1.42.11 // indirect
 	github.com/beeker1121/goque v2.1.0+incompatible // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/bits-and-blooms/bitset v1.2.0 // indirect
@@ -226,7 +226,7 @@ require (
 	github.com/hashicorp/go-cleanhttp v0.5.2 // indirect
 	github.com/hashicorp/go-hclog v0.16.2 // indirect
 	github.com/hashicorp/go-immutable-radix v1.3.1 // indirect
-	github.com/hashicorp/go-multierror v1.1.0 // indirect
+	github.com/hashicorp/go-multierror v1.1.1 // indirect
 	github.com/hashicorp/go-rootcerts v1.0.2 // indirect
 	github.com/hashicorp/go-uuid v1.0.2 // indirect
 	github.com/hashicorp/golang-lru v0.5.4 // indirect
