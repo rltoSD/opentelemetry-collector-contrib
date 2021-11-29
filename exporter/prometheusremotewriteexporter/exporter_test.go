@@ -232,7 +232,7 @@ func Test_Shutdown(t *testing.T) {
 
 type serverTestSet struct {
 	testName            string
-	ts                  prompb.TimeSeries
+	ts                  *prompb.TimeSeries
 	serverUp            bool
 	httpResponseCodes   []int
 	returnErrorOnCreate bool
@@ -284,7 +284,7 @@ func Test_export(t *testing.T) {
 	// are properly identified
 	tests := []serverTestSet{
 		{"success_case",
-			*ts1,
+			ts1,
 			true,
 			[]int{http.StatusOK, http.StatusCreated, http.StatusAccepted, http.StatusNonAuthoritativeInfo, http.StatusNoContent, http.StatusResetContent,
 				http.StatusPartialContent, http.StatusMultiStatus, http.StatusAlreadyReported, http.StatusIMUsed},
@@ -292,13 +292,13 @@ func Test_export(t *testing.T) {
 		},
 		{
 			"server_no_response_case",
-			*ts1,
+			ts1,
 			false,
 			[]int{http.StatusAccepted},
 			true,
 		}, {
 			"error_status_code_case",
-			*ts1,
+			ts1,
 			true,
 			[]int{http.StatusBadRequest, http.StatusUnauthorized, http.StatusPaymentRequired, http.StatusForbidden, http.StatusNotFound,
 				http.StatusMethodNotAllowed, http.StatusNotAcceptable, http.StatusProxyAuthRequired, http.StatusRequestTimeout, http.StatusConflict, http.StatusGone,
