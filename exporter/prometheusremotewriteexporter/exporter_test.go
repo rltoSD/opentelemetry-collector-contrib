@@ -230,6 +230,47 @@ func Test_Shutdown(t *testing.T) {
 	}
 }
 
+type serverTestSet struct {
+	testName            string
+	ts                  prompb.TimeSeries
+	serverUp            bool
+	httpResponseCodes   []int
+	returnErrorOnCreate bool
+}
+
+func validateWriteRequestTimeSeries(t *testing.T, r *http.Request, body []byte, ts1 *prompb.TimeSeries) {
+	// Receives the http requests and unzip, unmarshalls, and extracts TimeSeries
+	assert.Equal(t, "0.1.0", r.Header.Get("X-Prometheus-Remote-Write-Version"))
+	assert.Equal(t, "snappy", r.Header.Get("Content-Encoding"))
+	assert.Equal(t, "opentelemetry-collector/1.0", r.Header.Get("User-Agent"))
+	writeReq := &prompb.WriteRequest{}
+	unzipped := []byte{}
+
+	dest, err := snappy.Decode(unzipped, body)
+	require.NoError(t, err)
+
+	ok := proto.Unmarshal(dest, writeReq)
+	require.NoError(t, ok)
+
+	assert.EqualValues(t, 1, len(writeReq.Timeseries))
+	require.NotNil(t, writeReq.GetTimeseries())
+	assert.Equal(t, *ts1, writeReq.GetTimeseries()[0])
+}
+
+func validateRetryWriteRequest(t *testing.T, tt serverTestSet, httpResponseCode int, errs []error) {
+	// Check errs per httpResponseCode to validate retry write requests
+	if httpResponseCode >= 200 && httpResponseCode < 300 && !tt.returnErrorOnCreate {
+		assert.Len(t, errs, 0)
+	} else if httpResponseCode >= 400 && httpResponseCode < 500 && httpResponseCode != 429 {
+		assert.Len(t, errs, 1)
+	}
+
+	if tt.returnErrorOnCreate {
+		assert.Error(t, errs[0])
+		return
+	}
+}
+
 // Test whether or not the Server receives the correct TimeSeries.
 // Currently considering making this test an iterative for loop of multiple TimeSeries much akin to Test_PushMetrics
 func Test_export(t *testing.T) {
@@ -238,83 +279,66 @@ func Test_export(t *testing.T) {
 	sample1 := getSample(floatVal1, msTime1)
 	sample2 := getSample(floatVal2, msTime2)
 	ts1 := getTimeSeries(labels, sample1, sample2)
-	handleFunc := func(w http.ResponseWriter, r *http.Request, code int) {
-		// The following is a handler function that reads the sent httpRequest, unmarshal, and checks if the WriteRequest
-		// preserves the TimeSeries data correctly
-		body, err := ioutil.ReadAll(r.Body)
-		if err != nil {
-			t.Fatal(err)
-		}
-		require.NotNil(t, body)
-		// Receives the http requests and unzip, unmarshalls, and extracts TimeSeries
-		assert.Equal(t, "0.1.0", r.Header.Get("X-Prometheus-Remote-Write-Version"))
-		assert.Equal(t, "snappy", r.Header.Get("Content-Encoding"))
-		assert.Equal(t, "opentelemetry-collector/1.0", r.Header.Get("User-Agent"))
-		writeReq := &prompb.WriteRequest{}
-		unzipped := []byte{}
-
-		dest, err := snappy.Decode(unzipped, body)
-		require.NoError(t, err)
-
-		ok := proto.Unmarshal(dest, writeReq)
-		require.NoError(t, ok)
-
-		assert.EqualValues(t, 1, len(writeReq.Timeseries))
-		require.NotNil(t, writeReq.GetTimeseries())
-		assert.Equal(t, *ts1, writeReq.GetTimeseries()[0])
-		w.WriteHeader(code)
-	}
 
 	// Create in test table format to check if different HTTP response codes or server errors
 	// are properly identified
-	tests := []struct {
-		name                string
-		ts                  prompb.TimeSeries
-		serverUp            bool
-		httpResponseCode    int
-		returnErrorOnCreate bool
-	}{
+	tests := []serverTestSet{
 		{"success_case",
 			*ts1,
 			true,
-			http.StatusAccepted,
+			[]int{http.StatusOK, http.StatusCreated, http.StatusAccepted, http.StatusNonAuthoritativeInfo, http.StatusNoContent, http.StatusResetContent,
+				http.StatusPartialContent, http.StatusMultiStatus, http.StatusAlreadyReported, http.StatusIMUsed},
 			false,
 		},
 		{
 			"server_no_response_case",
 			*ts1,
 			false,
-			http.StatusAccepted,
+			[]int{http.StatusAccepted},
 			true,
 		}, {
 			"error_status_code_case",
 			*ts1,
 			true,
-			http.StatusForbidden,
+			[]int{http.StatusBadRequest, http.StatusUnauthorized, http.StatusPaymentRequired, http.StatusForbidden, http.StatusNotFound,
+				http.StatusMethodNotAllowed, http.StatusNotAcceptable, http.StatusProxyAuthRequired, http.StatusRequestTimeout, http.StatusConflict, http.StatusGone,
+				http.StatusLengthRequired, http.StatusPreconditionFailed, http.StatusRequestEntityTooLarge, http.StatusRequestURITooLong, http.StatusUnsupportedMediaType,
+				http.StatusRequestedRangeNotSatisfiable, http.StatusExpectationFailed, http.StatusTeapot, http.StatusMisdirectedRequest, http.StatusUnprocessableEntity,
+				http.StatusLocked, http.StatusFailedDependency, http.StatusTooEarly, http.StatusUpgradeRequired, http.StatusPreconditionRequired, http.StatusTooManyRequests,
+				http.StatusRequestHeaderFieldsTooLarge, http.StatusUnavailableForLegalReasons},
 			true,
 		},
 	}
 
+	// The following is a handler function that reads the sent httpRequest and passes validateWriteRequestTimeSeries function to unmarshal and check if the WriteRequest
+	// preserves the TimeSeries data correctly
+	handleFunc := func(w http.ResponseWriter, r *http.Request, code int) {
+		body, err := ioutil.ReadAll(r.Body)
+		if err != nil {
+			t.Fatal(err)
+		}
+		validateWriteRequestTimeSeries(t, r, body, ts1)
+		w.WriteHeader(code)
+	}
+
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				if handleFunc != nil {
-					handleFunc(w, r, tt.httpResponseCode)
+		for _, httpResponseCode := range tt.httpResponseCodes {
+			t.Run(tt.testName, func(t *testing.T) {
+				server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+					if handleFunc != nil {
+						handleFunc(w, r, httpResponseCode)
+					}
+				}))
+				defer server.Close()
+				serverURL, uErr := url.Parse(server.URL)
+				assert.NoError(t, uErr)
+				if !tt.serverUp {
+					server.Close()
 				}
-			}))
-			defer server.Close()
-			serverURL, uErr := url.Parse(server.URL)
-			assert.NoError(t, uErr)
-			if !tt.serverUp {
-				server.Close()
-			}
-			errs := runExportPipeline(ts1, serverURL)
-			if tt.returnErrorOnCreate {
-				assert.Error(t, errs[0])
-				return
-			}
-			assert.Len(t, errs, 0)
-		})
+				errs := runExportPipeline(ts1, serverURL)
+				validateRetryWriteRequest(t, tt, httpResponseCode, errs)
+			})
+		}
 	}
 }
 
