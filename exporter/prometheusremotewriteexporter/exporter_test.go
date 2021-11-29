@@ -230,48 +230,7 @@ func Test_Shutdown(t *testing.T) {
 	}
 }
 
-type serverTestSet struct {
-	testName            string
-	ts                  *prompb.TimeSeries
-	serverUp            bool
-	httpResponseCodes   []int
-	returnErrorOnCreate bool
-}
-
-func validateWriteRequestTimeSeries(t *testing.T, r *http.Request, body []byte, ts1 *prompb.TimeSeries) {
-	// Receives the http requests and unzip, unmarshalls, and extracts TimeSeries
-	assert.Equal(t, "0.1.0", r.Header.Get("X-Prometheus-Remote-Write-Version"))
-	assert.Equal(t, "snappy", r.Header.Get("Content-Encoding"))
-	assert.Equal(t, "opentelemetry-collector/1.0", r.Header.Get("User-Agent"))
-	writeReq := &prompb.WriteRequest{}
-	unzipped := []byte{}
-
-	dest, err := snappy.Decode(unzipped, body)
-	require.NoError(t, err)
-
-	ok := proto.Unmarshal(dest, writeReq)
-	require.NoError(t, ok)
-
-	assert.EqualValues(t, 1, len(writeReq.Timeseries))
-	require.NotNil(t, writeReq.GetTimeseries())
-	assert.Equal(t, *ts1, writeReq.GetTimeseries()[0])
-}
-
-func validateRetryWriteRequest(t *testing.T, tt serverTestSet, httpResponseCode int, errs []error) {
-	// Check errs per httpResponseCode to validate retry write requests
-	if httpResponseCode >= 200 && httpResponseCode < 300 && !tt.returnErrorOnCreate {
-		assert.Len(t, errs, 0)
-	} else if httpResponseCode >= 400 && httpResponseCode < 500 && httpResponseCode != 429 {
-		assert.Len(t, errs, 1)
-	}
-
-	if tt.returnErrorOnCreate {
-		assert.Error(t, errs[0])
-		return
-	}
-}
-
-// Test whether or not the Server receives the correct TimeSeries.
+// Tests whether or not the Server receives the correct TimeSeries and validates retry write requests for HTTP responses
 // Currently considering making this test an iterative for loop of multiple TimeSeries much akin to Test_PushMetrics
 func Test_export(t *testing.T) {
 	// First we will instantiate a dummy TimeSeries instance to pass into both the export call and compare the http request
@@ -282,9 +241,16 @@ func Test_export(t *testing.T) {
 
 	// Create in test table format to check if different HTTP response codes or server errors
 	// are properly identified
-	tests := []serverTestSet{
-		{"success_case",
-			ts1,
+	tests := []struct {
+		testName            string
+		ts                  prompb.TimeSeries
+		serverUp            bool
+		httpResponseCodes   []int
+		returnErrorOnCreate bool
+	}{
+		{
+			"success_case",
+			*ts1,
 			true,
 			[]int{http.StatusOK, http.StatusCreated, http.StatusAccepted, http.StatusNonAuthoritativeInfo, http.StatusNoContent, http.StatusResetContent,
 				http.StatusPartialContent, http.StatusMultiStatus, http.StatusAlreadyReported, http.StatusIMUsed},
@@ -292,13 +258,14 @@ func Test_export(t *testing.T) {
 		},
 		{
 			"server_no_response_case",
-			ts1,
+			*ts1,
 			false,
 			[]int{http.StatusAccepted},
 			true,
-		}, {
+		},
+		{
 			"error_status_code_case",
-			ts1,
+			*ts1,
 			true,
 			[]int{http.StatusBadRequest, http.StatusUnauthorized, http.StatusPaymentRequired, http.StatusForbidden, http.StatusNotFound,
 				http.StatusMethodNotAllowed, http.StatusNotAcceptable, http.StatusProxyAuthRequired, http.StatusRequestTimeout, http.StatusConflict, http.StatusGone,
@@ -336,9 +303,42 @@ func Test_export(t *testing.T) {
 					server.Close()
 				}
 				errs := runExportPipeline(ts1, serverURL)
-				validateRetryWriteRequest(t, tt, httpResponseCode, errs)
+				validateRetryWriteRequest(t, tt.returnErrorOnCreate, httpResponseCode, errs)
 			})
 		}
+	}
+}
+
+func validateWriteRequestTimeSeries(t *testing.T, r *http.Request, body []byte, ts1 *prompb.TimeSeries) {
+	// Receives the http requests and unzip, unmarshalls, and extracts TimeSeries
+	assert.Equal(t, "0.1.0", r.Header.Get("X-Prometheus-Remote-Write-Version"))
+	assert.Equal(t, "snappy", r.Header.Get("Content-Encoding"))
+	assert.Equal(t, "opentelemetry-collector/1.0", r.Header.Get("User-Agent"))
+	writeReq := &prompb.WriteRequest{}
+	unzipped := []byte{}
+
+	dest, err := snappy.Decode(unzipped, body)
+	require.NoError(t, err)
+
+	ok := proto.Unmarshal(dest, writeReq)
+	require.NoError(t, ok)
+
+	assert.EqualValues(t, 1, len(writeReq.Timeseries))
+	require.NotNil(t, writeReq.GetTimeseries())
+	assert.Equal(t, *ts1, writeReq.GetTimeseries()[0])
+}
+
+func validateRetryWriteRequest(t *testing.T, returnErrorOnCreate bool, httpResponseCode int, errs []error) {
+	// Check errs per httpResponseCode to validate retry write requests
+	if httpResponseCode >= 200 && httpResponseCode < 300 && !returnErrorOnCreate {
+		assert.Len(t, errs, 0)
+	} else if httpResponseCode >= 400 && httpResponseCode < 500 && httpResponseCode != 429 {
+		assert.Len(t, errs, 1)
+	}
+
+	if returnErrorOnCreate {
+		assert.Error(t, errs[0])
+		return
 	}
 }
 
