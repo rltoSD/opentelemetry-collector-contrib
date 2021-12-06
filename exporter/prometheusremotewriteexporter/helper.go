@@ -16,6 +16,7 @@ package prometheusremotewriteexporter // import "github.com/open-telemetry/opent
 
 import (
 	"errors"
+	"github.com/prometheus/prometheus/pkg/value"
 	"log"
 	"math"
 	"sort"
@@ -323,11 +324,16 @@ func addSingleNumberDataPoint(pt pdata.NumberDataPoint, resource pdata.Resource,
 		// convert ns to ms
 		Timestamp: convertTimeStamp(pt.Timestamp()),
 	}
-	switch pt.Type() {
-	case pdata.MetricValueTypeInt:
-		sample.Value = float64(pt.IntVal())
-	case pdata.MetricValueTypeDouble:
-		sample.Value = pt.DoubleVal()
+
+	if pt.Flags().HasFlag(pdata.MetricDataPointFlagNoRecordedValue) {
+		sample.Value = math.Float64frombits(value.StaleNaN)
+	} else {
+		switch pt.Type() {
+		case pdata.MetricValueTypeInt:
+			sample.Value = float64(pt.IntVal())
+		case pdata.MetricValueTypeDouble:
+			sample.Value = pt.DoubleVal()
+		}
 	}
 	addSample(tsMap, sample, labels, metric)
 }
@@ -341,18 +347,23 @@ func addSingleHistogramDataPoint(pt pdata.HistogramDataPoint, resource pdata.Res
 	baseName := getPromMetricName(metric, namespace)
 	// treat sum as a sample in an individual TimeSeries
 	sum := &prompb.Sample{
-		Value:     pt.Sum(),
 		Timestamp: time,
+	}
+	// treat count as a sample in an individual TimeSeries
+	count := &prompb.Sample{
+		Timestamp: time,
+	}
+	if pt.Flags().HasFlag(pdata.MetricDataPointFlagNoRecordedValue) {
+		sum.Value = math.Float64frombits(value.StaleNaN)
+		count.Value = math.Float64frombits(value.StaleNaN)
+	} else {
+		sum.Value = pt.Sum()
+		count.Value = math.Float64frombits(pt.Count())
 	}
 
 	sumlabels := createAttributes(resource, pt.Attributes(), externalLabels, nameStr, baseName+sumStr)
 	addSample(tsMap, sum, sumlabels, metric)
 
-	// treat count as a sample in an individual TimeSeries
-	count := &prompb.Sample{
-		Value:     float64(pt.Count()),
-		Timestamp: time,
-	}
 	countlabels := createAttributes(resource, pt.Attributes(), externalLabels, nameStr, baseName+countStr)
 	addSample(tsMap, count, countlabels, metric)
 
@@ -370,8 +381,12 @@ func addSingleHistogramDataPoint(pt pdata.HistogramDataPoint, resource pdata.Res
 		}
 		cumulativeCount += pt.BucketCounts()[index]
 		bucket := &prompb.Sample{
-			Value:     float64(cumulativeCount),
 			Timestamp: time,
+		}
+		if pt.Flags().HasFlag(pdata.MetricDataPointFlagNoRecordedValue) {
+			bucket.Value = math.Float64frombits(value.StaleNaN)
+		} else {
+			bucket.Value = math.Float64frombits(cumulativeCount)
 		}
 		boundStr := strconv.FormatFloat(bound, 'f', -1, 64)
 		labels := createAttributes(resource, pt.Attributes(), externalLabels, nameStr, baseName+bucketStr, leStr, boundStr)
@@ -382,8 +397,12 @@ func addSingleHistogramDataPoint(pt pdata.HistogramDataPoint, resource pdata.Res
 	// add le=+Inf bucket
 	cumulativeCount += pt.BucketCounts()[len(pt.BucketCounts())-1]
 	infBucket := &prompb.Sample{
-		Value:     float64(cumulativeCount),
 		Timestamp: time,
+	}
+	if pt.Flags().HasFlag(pdata.MetricDataPointFlagNoRecordedValue) {
+		infBucket.Value = math.Float64frombits(value.StaleNaN)
+	} else {
+		infBucket.Value = math.Float64frombits(cumulativeCount)
 	}
 	infLabels := createAttributes(resource, pt.Attributes(), externalLabels, nameStr, baseName+bucketStr, leStr, pInfStr)
 	sig := addSample(tsMap, infBucket, infLabels, metric)
@@ -428,18 +447,24 @@ func addSingleSummaryDataPoint(pt pdata.SummaryDataPoint, resource pdata.Resourc
 	baseName := getPromMetricName(metric, namespace)
 	// treat sum as a sample in an individual TimeSeries
 	sum := &prompb.Sample{
-		Value:     pt.Sum(),
 		Timestamp: time,
+	}
+	// treat count as a sample in an individual TimeSeries
+	count := &prompb.Sample{
+		Timestamp: time,
+	}
+
+	if pt.Flags().HasFlag(pdata.MetricDataPointFlagNoRecordedValue) {
+		sum.Value = math.Float64frombits(value.StaleNaN)
+		count.Value = math.Float64frombits(value.StaleNaN)
+	} else {
+		sum.Value = pt.Sum()
+		count.Value = math.Float64frombits(pt.Count())
 	}
 
 	sumlabels := createAttributes(resource, pt.Attributes(), externalLabels, nameStr, baseName+sumStr)
 	addSample(tsMap, sum, sumlabels, metric)
 
-	// treat count as a sample in an individual TimeSeries
-	count := &prompb.Sample{
-		Value:     float64(pt.Count()),
-		Timestamp: time,
-	}
 	countlabels := createAttributes(resource, pt.Attributes(), externalLabels, nameStr, baseName+countStr)
 	addSample(tsMap, count, countlabels, metric)
 
@@ -447,8 +472,12 @@ func addSingleSummaryDataPoint(pt pdata.SummaryDataPoint, resource pdata.Resourc
 	for i := 0; i < pt.QuantileValues().Len(); i++ {
 		qt := pt.QuantileValues().At(i)
 		quantile := &prompb.Sample{
-			Value:     qt.Value(),
 			Timestamp: time,
+		}
+		if pt.Flags().HasFlag(pdata.MetricDataPointFlagNoRecordedValue) {
+			quantile.Value = math.Float64frombits(value.StaleNaN)
+		} else {
+			quantile.Value = qt.Value()
 		}
 		percentileStr := strconv.FormatFloat(qt.Quantile(), 'f', -1, 64)
 		qtlabels := createAttributes(resource, pt.Attributes(), externalLabels, nameStr, baseName, quantileStr, percentileStr)
